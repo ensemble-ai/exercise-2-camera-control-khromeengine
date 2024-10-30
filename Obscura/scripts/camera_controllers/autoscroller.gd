@@ -4,6 +4,7 @@ extends CameraControllerBase
 @export var top_left: Vector2 = Vector2.ZERO
 @export var bottom_right: Vector2 = Vector2.ZERO
 @export var autoscroll_speed: Vector3 = Vector3.ZERO
+@export var move_target: bool = false
 
 
 func _process(delta) -> void:
@@ -14,6 +15,9 @@ func _process(delta) -> void:
 		draw_logic()
 		
 	global_position += autoscroll_speed * delta
+	
+	if move_target:
+		target.global_position += autoscroll_speed * delta
 	
 	var tpos = target.global_position
 	var cpos = global_position
