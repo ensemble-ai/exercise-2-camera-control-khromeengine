@@ -1,12 +1,22 @@
-class_name PositionLerp
+class_name LeadingLerp
 extends CameraControllerBase
 
-@export var follow_speed: float = 30
+@export var catchup_delay_duration: float = 0.12
 @export var catchup_speed: float = 16
 @export var leash_distance: float = 8
-@export var catchup_slowdown_leash: float = 2
 
+var _catchup: bool = false
 var _speed: float = 2
+var _timer: Timer
+
+func _ready() -> void:
+	super()
+	_timer = Timer.new()
+	_timer.timeout.connect(_on_timer_end)
+	_timer.autostart = false
+	_timer.one_shot = true
+	add_child(_timer)
+	
 
 func _process(delta) -> void:
 	if not current:
@@ -18,30 +28,25 @@ func _process(delta) -> void:
 	var tpos = target.global_position
 	var cpos = global_position
 	
-	var tplane = Vector2(tpos.x, tpos.z)
-	var cplane = Vector2(cpos.x, cpos.z)
+	var plane_dist_vector = Vector2(tpos.x - cpos.x, tpos.z - cpos.z)
+	var cam_target_dir = Vector3(plane_dist_vector.x, 0, plane_dist_vector.y)
 	
-	if not cplane.distance_to(tplane) < 0.1:
-		
-		var plane_dist_vector = Vector2(tpos.x - cpos.x, tpos.z - cpos.z)
-		var xz_dist = plane_dist_vector.length()
-		var plane_target_dir = plane_dist_vector.normalized()
-		var target_dir = Vector3(plane_target_dir.x, 0 , plane_target_dir.y)
-		var target_spd = target.velocity.length()
-		var dist_ratio = clampf(xz_dist / leash_distance, 0, 1)
-		
-		if target_spd > 0:
-			if cplane.distance_to(tplane) > leash_distance:
-				_speed = target_spd
-			else:	
-				_speed = lerp(follow_speed, target_spd, dist_ratio)
-		else:
-			var catchup_dist_ratio = clampf(xz_dist / catchup_slowdown_leash, 0, 1)
-			_speed = lerp(catchup_speed, 0.0, 1.0 - catchup_dist_ratio)
+	var target_spd = target.velocity.length()
+
+	if not is_zero_approx(target_spd):
+		_timer.stop()
+		_catchup = false
+		_speed = target_spd
+		var target_dir = target.velocity.normalized()
+		var go_to_point = tpos + target_dir * leash_distance
+		go_to_point.y = global_position.y
+	
 		global_position += _speed * target_dir * delta
-	else:
-		global_position.x = tpos.x
-		global_position.z = tpos.z
+		global_position = lerp(global_position, go_to_point, 1 - 0.05**delta)
+	elif _catchup:
+		global_position += (catchup_speed) * cam_target_dir * delta
+	elif _timer.is_stopped() and not _catchup:
+		_timer.start(catchup_delay_duration)
 		
 	super(delta)
 	
@@ -72,3 +77,7 @@ func draw_logic() -> void:
 	#mesh is freed after one update of _process
 	await get_tree().process_frame
 	mesh_instance.queue_free()
+
+
+func _on_timer_end() -> void:
+	_catchup = true
