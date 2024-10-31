@@ -7,6 +7,11 @@ extends CameraControllerBase
 @export var move_target: bool = false
 
 
+func _ready() -> void:
+	super()
+	position = target.position
+
+
 func _process(delta) -> void:
 	if not current:
 		return

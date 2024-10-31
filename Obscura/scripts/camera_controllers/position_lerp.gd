@@ -8,6 +8,12 @@ extends CameraControllerBase
 
 var _speed: float = 2
 
+
+func _ready() -> void:
+	super()
+	position = target.position
+
+
 func _process(delta) -> void:
 	if not current:
 		return

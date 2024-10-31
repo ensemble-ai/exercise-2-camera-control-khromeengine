@@ -1,16 +1,19 @@
 class_name LeadingLerp
 extends CameraControllerBase
 
-@export var catchup_delay_duration: float = 0.12
-@export var catchup_speed: float = 16
+# Lead speed was not used in this camera.
+@export var catchup_delay_duration: float = 0.08
+@export var catchup_speed: float = 6
 @export var leash_distance: float = 8
 
 var _catchup: bool = false
 var _speed: float = 2
 var _timer: Timer
 
+
 func _ready() -> void:
 	super()
+	position = target.position
 	_timer = Timer.new()
 	_timer.timeout.connect(_on_timer_end)
 	_timer.autostart = false
@@ -44,7 +47,7 @@ func _process(delta) -> void:
 		global_position += _speed * target_dir * delta
 		global_position = lerp(global_position, go_to_point, 1 - 0.05**delta)
 	elif _catchup:
-		global_position += (catchup_speed) * cam_target_dir * delta
+		global_position += catchup_speed * cam_target_dir * delta
 	elif _timer.is_stopped() and not _catchup:
 		_timer.start(catchup_delay_duration)
 		
