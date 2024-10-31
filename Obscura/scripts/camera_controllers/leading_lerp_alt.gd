@@ -1,7 +1,9 @@
-class_name LeadingLerp
+class_name LeadingLerpAlt
 extends CameraControllerBase
 
-# Lead speed was not used in this camera.
+# I didn't like this implementation.
+
+@export var lead_speed: float = 70
 @export var catchup_delay_duration: float = 0.08
 @export var catchup_speed: float = 6
 @export var leash_distance: float = 8
@@ -41,11 +43,12 @@ func _process(delta) -> void:
 		_catchup = false
 		_speed = target_spd
 		var target_dir = target.velocity.normalized()
-		var go_to_point = tpos + target_dir * leash_distance
-		go_to_point.y = global_position.y
-
+		var go_to_vel = target_dir * lead_speed
+		var dist_ratio = clampf(plane_dist_vector.length() / leash_distance, 0, 1)
+		go_to_vel.y = 0
+		
 		global_position += _speed * target_dir * delta
-		global_position = lerp(global_position, go_to_point, 1 - 0.05**delta)
+		global_position += lerp(Vector3.ZERO, go_to_vel, 1 - 0.05**delta) * delta * (1 - dist_ratio)
 		
 	elif _catchup:
 		global_position += catchup_speed * cam_target_dir * delta

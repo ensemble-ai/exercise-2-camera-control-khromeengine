@@ -11,7 +11,7 @@ extends CameraControllerBase
 
 @onready var tpos = target.global_position
 @onready var tspd = target.velocity
-var cpos = global_position
+@onready var cpos = global_position
 
 func _ready() -> void:
 	super()
